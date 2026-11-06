@@ -1,0 +1,369 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Ruby Playground</title>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/codemirror.min.css" integrity="sha384-zaeBlB/vwYsDRSlFajnDd7OydJ0cWk+c2OWybl3eSUf6hW2EbhlCsQPqKr3gkznT" crossorigin="anonymous">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/theme/eclipse.min.css" integrity="sha384-dq10nYMe5EzlTlySS4PL3lt13I+hSWRGzpsgTbwcrbXrI3hXw2NpiZIi4vAnxjI3" crossorigin="anonymous">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/theme/material-darker.min.css" integrity="sha384-eZTPTN0EvJdn23s24UDYJmUM2T7C2ZFa3qFLypeBruJv8mZeTusKUAO/j5zPAQ6l" crossorigin="anonymous">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@xterm/xterm@5.5.0/css/xterm.min.css" integrity="sha384-tStR1zLfWgsiXCF3IgfB3lBa8KmBe/lG287CL9WCeKgQYcp1bjb4/+mwN6oti4Co" crossorigin="anonymous">
+<style>
+  :root {
+    --bg: #f6f7f9; --panel: #ffffff; --border: #dfe2e7; --text: #1d2330; --muted: #6b7280;
+    --accent: #c4302b; --accent-text: #ffffff; --hover: #eef0f3; --active: #fde8e7;
+    --pass: #15803d; --fail: #c4302b; --error: #b45309; --idle: #b8bec8; --run: #2563eb;
+    --term-bg: #fbfbfc; --mono: ui-monospace, "Cascadia Code", "JetBrains Mono", Menlo, Consolas, monospace;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #15171c; --panel: #1c1f26; --border: #2c313b; --text: #e6e8ec; --muted: #9aa1ad;
+      --accent: #e5534b; --accent-text: #ffffff; --hover: #252932; --active: #3a2324;
+      --pass: #4ade80; --fail: #f87171; --error: #fbbf24; --idle: #4b5262; --run: #60a5fa; --term-bg: #17191f;
+    }
+  }
+  * { box-sizing: border-box; }
+  html, body { height: 100%; margin: 0; }
+  body { background: var(--bg); color: var(--text); font: 14px/1.4 system-ui, -apple-system, "Segoe UI", sans-serif;
+         display: grid; grid-template-rows: auto 1fr; }
+  header { display: flex; align-items: center; gap: 12px; padding: 10px 16px; border-bottom: 1px solid var(--border); background: var(--panel); }
+  header h1 { font-size: 16px; margin: 0; display: flex; align-items: center; gap: 8px; }
+  header h1 .gem { width: 14px; height: 14px; background: var(--accent); transform: rotate(45deg); border-radius: 2px; }
+  header .hint { margin-left: auto; color: var(--muted); font-size: 12px; }
+  kbd { font-family: var(--mono); font-size: 11px; border: 1px solid var(--border); border-radius: 4px; padding: 0 4px; }
+
+  .layout { display: grid; grid-template-columns: 240px 1fr; min-height: 0; }
+  aside { border-right: 1px solid var(--border); background: var(--panel); overflow: auto; padding: 12px 8px; }
+  aside h2 { font-size: 11px; text-transform: uppercase; letter-spacing: .06em; color: var(--muted); margin: 8px 8px 6px; }
+  .list { list-style: none; margin: 0 0 16px; padding: 0; }
+  .list button { width: 100%; text-align: left; border: 0; background: none; color: inherit; font: inherit; padding: 5px 8px;
+                 border-radius: 6px; cursor: pointer; display: flex; align-items: center; gap: 8px; }
+  .list button:hover:not(:disabled) { background: var(--hover); }
+  .list button:disabled { cursor: default; opacity: .6; }
+  .list button.active { background: var(--active); }
+  .list .name { font-family: var(--mono); font-size: 12.5px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .list .tag { margin-left: auto; font-size: 10px; color: var(--muted); }
+  .dirty::after { content: "●"; color: var(--accent); margin-left: 4px; font-size: 10px; }
+  .dot { width: 8px; height: 8px; border-radius: 50%; background: var(--idle); flex: none; }
+  .dot.pass { background: var(--pass); } .dot.fail { background: var(--fail); } .dot.error { background: var(--error); }
+  .row { display: flex; gap: 8px; align-items: center; margin: 0 8px 8px; }
+  .row label { font-size: 12px; color: var(--muted); display: flex; align-items: center; gap: 4px; cursor: pointer; }
+  .summary { margin: 0 8px 8px; font-size: 12px; color: var(--muted); }
+
+  main { display: grid; grid-template-rows: auto minmax(120px, 1fr) minmax(180px, 42%); min-width: 0; min-height: 0; }
+  .toolbar { display: flex; align-items: center; gap: 8px; padding: 8px 12px; border-bottom: 1px solid var(--border); background: var(--panel); flex-wrap: wrap; }
+  .toolbar .file { font-family: var(--mono); font-weight: 600; }
+  .toolbar .ro { font-size: 11px; color: var(--muted); border: 1px solid var(--border); border-radius: 4px; padding: 0 5px; }
+  .spacer { flex: 1; }
+  button.btn { font: inherit; font-size: 13px; padding: 5px 12px; border-radius: 6px; border: 1px solid var(--border);
+               background: var(--panel); color: var(--text); cursor: pointer; }
+  button.btn:hover:not(:disabled) { background: var(--hover); }
+  button.btn.primary { background: var(--accent); border-color: var(--accent); color: var(--accent-text); }
+  button.btn.primary:hover:not(:disabled) { filter: brightness(1.08); background: var(--accent); }
+  button.btn:disabled { opacity: .5; cursor: default; }
+  button.btn.small { padding: 2px 8px; font-size: 12px; }
+
+  .editor { min-height: 0; overflow: hidden; }
+  .CodeMirror { height: 100%; font-family: var(--mono); font-size: 13.5px; line-height: 1.5; }
+  .cm-s-eclipse.CodeMirror { background: var(--panel); }
+
+  .console { display: grid; grid-template-rows: auto 1fr; border-top: 1px solid var(--border); min-height: 0; background: var(--term-bg); }
+  .console .bar { display: flex; align-items: center; gap: 10px; padding: 6px 12px; border-bottom: 1px solid var(--border); background: var(--panel); }
+  .console .bar strong { font-size: 12px; text-transform: uppercase; letter-spacing: .06em; color: var(--muted); }
+  .console .meta { font-size: 12px; color: var(--muted); font-family: var(--mono); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .badge { font-size: 11px; font-weight: 600; padding: 1px 8px; border-radius: 999px; color: #fff; white-space: nowrap; }
+  .badge.pass { background: var(--pass); color: #04210f; } .badge.fail { background: var(--fail); }
+  .badge.error { background: var(--error); color: #2a1700; } .badge.run { background: var(--run); }
+  .terminal-wrap { min-height: 0; padding: 6px 0 4px 10px; }
+  #terminal { height: 100%; }
+
+  @media (max-width: 700px) {
+    .layout { grid-template-columns: 1fr; grid-template-rows: auto 1fr; }
+    aside { border-right: 0; border-bottom: 1px solid var(--border); max-height: 35vh; }
+    header .hint { display: none; }
+  }
+</style>
+</head>
+<body>
+<header>
+  <h1><span class="gem"></span>Ruby Playground</h1>
+  <span class="hint"><kbd>Ctrl</kbd>+<kbd>S</kbd> save · <kbd>Ctrl</kbd>+<kbd>Enter</kbd> run file · <kbd>Ctrl</kbd>+<kbd>C</kbd> in the terminal stops a program</span>
+</header>
+<div class="layout">
+  <aside>
+    <h2>Files</h2>
+    <ul class="list" id="files"></ul>
+
+    <h2>Tests</h2>
+    <div class="row">
+      <button class="btn small primary" id="run-all">Run all tests</button>
+      <label title="Run the tests against ruby_solutions.rb instead of your exercises">
+        <input type="checkbox" id="solutions"> answer key
+      </label>
+    </div>
+    <div class="summary" id="summary">Not run yet</div>
+    <ul class="list" id="tests"></ul>
+  </aside>
+
+  <main>
+    <div class="toolbar">
+      <span class="file" id="filename">–</span>
+      <span class="ro" id="readonly" hidden>read-only</span>
+      <span class="spacer"></span>
+      <button class="btn" id="save" disabled>Save</button>
+      <button class="btn" id="irb" title="Start an interactive IRB session in the terminal">IRB</button>
+      <button class="btn primary" id="run" disabled>▶ Run file</button>
+    </div>
+    <div class="editor" id="editor"></div>
+    <section class="console">
+      <div class="bar">
+        <strong>Terminal</strong>
+        <span id="badge"></span>
+        <span class="meta" id="meta"></span>
+        <span class="spacer"></span>
+        <button class="btn small" id="stop" disabled>■ Stop</button>
+        <button class="btn small" id="clear">Clear</button>
+      </div>
+      <div class="terminal-wrap"><div id="terminal"></div></div>
+    </section>
+  </main>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/codemirror.min.js" integrity="sha384-ZYmwuq4n2gOcNxMSiJ6jyTj+BbIrilr7p6dlq6q5nmSWKmsH9UU4K1qqjycMkfmR" crossorigin="anonymous"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/mode/ruby/ruby.min.js" integrity="sha384-X1fjw3/PXnpDnnE168So+cJbmr6pkkiFoM+e25e2G7UNQRSLh5wcn/h7qbbSq2nC" crossorigin="anonymous"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/addon/edit/matchbrackets.min.js" integrity="sha384-LjCI3E8qhhxXZvu7+FCvqx9eZYSowFvuJ7z54KsgI/BDPGKEuysqCg/vYiKHvC4Y" crossorigin="anonymous"></script>
+<script src="https://cdn.jsdelivr.net/npm/@xterm/xterm@5.5.0/lib/xterm.min.js" integrity="sha384-J4qzUjBl1FxyLsl/kQPQIOeINsmp17OHYXDOMpMxlKX53ZfYsL+aWHpgArvOuof9" crossorigin="anonymous"></script>
+<script src="https://cdn.jsdelivr.net/npm/@xterm/addon-fit@0.10.0/lib/addon-fit.min.js" integrity="sha384-XGqKrV8Jrukp1NITJbOEHwg01tNkuXr6uB6YEj69ebpYU3v7FvoGgEg23C1Gcehk" crossorigin="anonymous"></script>
+<script>
+const $ = (id) => document.getElementById(id);
+const docs = {};          // file name -> { doc, gen }
+let current = null, readOnly = [], run = null; // run = { id, kind, test }
+
+// ---------- Editor ----------
+const dark = matchMedia("(prefers-color-scheme: dark)");
+const editor = CodeMirror($("editor"), {
+  mode: "ruby", lineNumbers: true, matchBrackets: true, indentUnit: 2, tabSize: 2, indentWithTabs: false,
+  theme: dark.matches ? "material-darker" : "eclipse",
+  extraKeys: { Tab: (cm) => cm.replaceSelection("  "), "Ctrl-S": save, "Cmd-S": save, "Ctrl-Enter": runFile, "Cmd-Enter": runFile },
+});
+
+// ---------- Terminal ----------
+const termThemes = {
+  light: { background: "#fbfbfc", foreground: "#1d2330", cursor: "#c4302b", selectionBackground: "#c4302b33",
+           black: "#1d2330", red: "#c4302b", green: "#15803d", yellow: "#a16207", blue: "#1d4ed8", magenta: "#a21caf", cyan: "#0e7490", white: "#6b7280",
+           brightBlack: "#6b7280", brightRed: "#dc2626", brightGreen: "#16a34a", brightYellow: "#b45309", brightBlue: "#2563eb", brightMagenta: "#c026d3", brightCyan: "#0891b2", brightWhite: "#374151" },
+  dark:  { background: "#17191f", foreground: "#e6e8ec", cursor: "#e5534b", selectionBackground: "#e5534b44" },
+};
+const term = new Terminal({
+  fontFamily: 'ui-monospace, "Cascadia Code", "JetBrains Mono", Menlo, Consolas, monospace',
+  fontSize: 13, cursorBlink: true, scrollback: 5000, theme: dark.matches ? termThemes.dark : termThemes.light,
+});
+const fit = new FitAddon.FitAddon();
+term.loadAddon(fit);
+term.open($("terminal"));
+const dim = (s) => `\x1b[2m${s}\x1b[0m`;
+term.writeln(dim("Run a file, run tests, or start IRB. Programs run here, and you can type into them like a normal terminal."));
+new ResizeObserver(() => { try { fit.fit(); } catch {} }).observe($("terminal"));
+term.onResize(({ rows, cols }) => { if (run) api("/api/resize", { id: run.id, rows, cols }).catch(() => {}); });
+
+dark.addEventListener("change", (e) => {
+  editor.setOption("theme", e.matches ? "material-darker" : "eclipse");
+  term.options.theme = e.matches ? termThemes.dark : termThemes.light;
+});
+
+// Keystrokes go to the running program in order (one request at a time).
+let inputChain = Promise.resolve();
+term.onData((data) => {
+  if (!run) return;
+  const id = run.id;
+  inputChain = inputChain.then(() => api("/api/input", { id, data }).catch(() => {}));
+});
+
+// ---------- API ----------
+async function api(path, body) {
+  const headers = { "X-Playground": "1" };
+  const opts = body ? { method: "POST", body: JSON.stringify(body), headers: { ...headers, "Content-Type": "application/json" } } : { headers };
+  const res = await fetch(path, opts);
+  const data = await res.json().catch(() => ({}));
+  if (!res.ok) throw new Error(data.error || `${res.status} ${res.statusText}`);
+  return data;
+}
+
+// ---------- Files ----------
+const isDirty = (name) => docs[name] && !docs[name].doc.isClean(docs[name].gen);
+
+function renderFiles(files) {
+  $("files").innerHTML = "";
+  for (const name of files) {
+    const li = document.createElement("li");
+    const b = document.createElement("button");
+    b.dataset.name = name;
+    b.innerHTML = `<span class="name"></span>${readOnly.includes(name) ? '<span class="tag">read-only</span>' : ""}`;
+    b.querySelector(".name").textContent = name;
+    b.onclick = () => openFile(name);
+    li.append(b);
+    $("files").append(li);
+  }
+}
+
+function renderTests(tests) {
+  $("tests").innerHTML = "";
+  for (const t of tests) {
+    const li = document.createElement("li");
+    const b = document.createElement("button");
+    b.dataset.test = t;
+    b.title = `Run ${t}`;
+    b.innerHTML = `<span class="dot"></span><span class="name"></span>`;
+    b.querySelector(".name").textContent = t.replace(/^test_/, "");
+    b.onclick = () => runTests(t);
+    li.append(b);
+    $("tests").append(li);
+  }
+}
+
+function refreshMarks() {
+  document.querySelectorAll("#files button").forEach((b) => {
+    b.classList.toggle("active", b.dataset.name === current);
+    b.querySelector(".name").classList.toggle("dirty", isDirty(b.dataset.name));
+  });
+  $("filename").textContent = current || "–";
+  $("filename").classList.toggle("dirty", isDirty(current));
+  $("readonly").hidden = !readOnly.includes(current);
+  $("save").disabled = !current || readOnly.includes(current) || !isDirty(current);
+  $("run").disabled = !current;
+  $("stop").disabled = !run;
+}
+
+async function openFile(name) {
+  try {
+    if (!docs[name]) {
+      const { content } = await api(`/api/file?name=${encodeURIComponent(name)}`);
+      const doc = CodeMirror.Doc(content, "ruby");
+      docs[name] = { doc, gen: doc.changeGeneration() };
+    }
+    current = name;
+    editor.swapDoc(docs[name].doc);
+    editor.setOption("readOnly", readOnly.includes(name));
+    editor.focus();
+    refreshMarks();
+    try { localStorage.setItem("rp-file", name); } catch {}
+  } catch (e) { termError(e); }
+}
+
+async function saveFile(name) {
+  if (!isDirty(name) || readOnly.includes(name)) return;
+  const entry = docs[name];
+  const gen = entry.doc.changeGeneration();
+  await api("/api/file", { name, content: entry.doc.getValue() });
+  entry.gen = gen;
+  refreshMarks();
+}
+
+async function saveAll() { for (const name of Object.keys(docs)) await saveFile(name); }
+async function save() { try { await saveFile(current); } catch (e) { termError(e); } }
+
+// ---------- Running ----------
+function badge(kind, text) { $("badge").innerHTML = kind ? `<span class="badge ${kind}">${text}</span>` : ""; }
+function termError(e) { term.writeln(`\r\n\x1b[31m${e.message}\x1b[0m`); badge("fail", "error"); }
+
+function bytesFromBase64(b64) {
+  const bin = atob(b64);
+  const bytes = new Uint8Array(bin.length);
+  for (let i = 0; i < bin.length; i++) bytes[i] = bin.charCodeAt(i);
+  return bytes;
+}
+
+async function start(body) {
+  try {
+    await saveAll();
+    fit.fit();
+    const { rows, cols } = term;
+    const r = await api("/api/start", { ...body, rows, cols });
+    run = { id: r.id, kind: body.kind, test: body.test, solutions: body.solutions };
+    term.reset();
+    term.writeln(dim(`$ ${r.command}`));
+    badge("run", "running");
+    $("meta").textContent = r.command;
+    refreshMarks();
+    term.focus();
+    stream(run);
+  } catch (e) { termError(e); }
+}
+
+async function stream(thisRun) {
+  try {
+    const res = await fetch(`/api/stream?id=${thisRun.id}`, { headers: { "X-Playground": "1" } });
+    if (!res.ok) throw new Error((await res.json().catch(() => ({}))).error || res.statusText);
+    const reader = res.body.getReader();
+    const decoder = new TextDecoder();
+    let buf = "";
+    for (;;) {
+      const { value, done } = await reader.read();
+      if (done) break;
+      buf += decoder.decode(value, { stream: true });
+      let i;
+      while ((i = buf.indexOf("\n")) >= 0) {
+        const line = buf.slice(0, i);
+        buf = buf.slice(i + 1);
+        if (!line) continue;
+        const msg = JSON.parse(line);
+        if (run !== thisRun) return; // a newer run replaced this one
+        if (msg.o) term.write(bytesFromBase64(msg.o));
+        if (msg.exit) finished(thisRun, msg.exit);
+      }
+    }
+  } catch (e) { if (run === thisRun) { termError(e); run = null; refreshMarks(); } }
+}
+
+function finished(thisRun, { code, signal, results }) {
+  run = null;
+  refreshMarks();
+  if (signal) { term.write(`\r\n${dim("[stopped]")}\r\n`); badge("error", "stopped"); }
+  else { term.write(`\r\n${dim(`[exited with code ${code}]`)}\r\n`); badge(code === 0 ? "pass" : "fail", `exit ${code}`); }
+  if (thisRun.kind === "test" && results) showTestResults(thisRun, results);
+}
+
+function showTestResults(thisRun, results) {
+  if (!thisRun.test) document.querySelectorAll("#tests .dot").forEach((d) => (d.className = "dot"));
+  for (const [name, status] of Object.entries(results)) {
+    const dot = document.querySelector(`#tests button[data-test="${name}"] .dot`);
+    if (dot) dot.className = `dot ${status}`;
+  }
+  const vals = Object.values(results);
+  const passed = vals.filter((v) => v === "pass").length;
+  if (vals.length) badge(passed === vals.length ? "pass" : "fail", `${passed}/${vals.length} passed`);
+  const dots = [...document.querySelectorAll("#tests .dot")];
+  $("summary").textContent = `${dots.filter((d) => d.classList.contains("pass")).length} of ${dots.length} passing${thisRun.solutions ? " (answer key)" : ""}`;
+}
+
+function runFile() { if (current) start({ kind: "file", name: current }); }
+function runTests(test) { start({ kind: "test", test: test || null, solutions: $("solutions").checked }); }
+
+$("save").onclick = save;
+$("run").onclick = runFile;
+$("irb").onclick = () => start({ kind: "irb" });
+$("run-all").onclick = () => runTests(null);
+$("stop").onclick = () => { if (run) api("/api/stop", { id: run.id }).catch(() => {}); };
+$("clear").onclick = () => { term.clear(); if (!run) { badge(); $("meta").textContent = ""; } term.focus(); };
+$("solutions").onchange = () => { document.querySelectorAll("#tests .dot").forEach((d) => (d.className = "dot")); $("summary").textContent = "Not run yet"; };
+editor.on("changes", refreshMarks);
+document.addEventListener("keydown", (e) => {
+  if ((e.ctrlKey || e.metaKey) && e.key === "s") { e.preventDefault(); save(); }
+});
+window.addEventListener("beforeunload", (e) => { if (Object.keys(docs).some(isDirty)) e.preventDefault(); });
+
+(async () => {
+  try {
+    const data = await api("/api/files");
+    readOnly = data.read_only;
+    renderFiles(data.files);
+    renderTests(data.tests);
+    let first = null;
+    try { first = localStorage.getItem("rp-file"); } catch {}
+    if (!data.files.includes(first)) first = data.files.includes("ruby_exercises.rb") ? "ruby_exercises.rb" : data.files[0];
+    if (first) await openFile(first);
+  } catch (e) { termError(e); }
+})();
+</script>
+</body>
+</html>
