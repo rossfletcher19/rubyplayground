@@ -1,0 +1,44 @@
+# RuboCop settings for this practice project.
+AllCops:
+  TargetRubyVersion: 3.4   # matches the Ruby in WSL; enables syntax like endless methods
+  NewCops: enable
+  SuggestExtensions: false
+
+# Double quotes everywhere, so adding #{interpolation} later never needs a quote change.
+Style/StringLiterals:
+  EnforcedStyle: double_quotes
+Style/StringLiteralsInInterpolation:
+  EnforcedStyle: double_quotes
+
+# Exercise signatures use short names like s, a, b, k, n on purpose.
+Naming/MethodParameterName:
+  AllowedNames: [a, b, k, n, s, x, y, i, j, id, io, to]
+
+# The "# frozen_string_literal: true" magic comment is noise for practice scripts.
+Style/FrozenStringLiteralComment:
+  Enabled: false
+
+# The UI server's request router is one deliberately long method.
+Metrics:
+  Exclude:
+    - "ui/**/*"
+
+# Drills are allowed slightly longer methods and lines.
+Metrics/MethodLength:
+  Max: 25
+Metrics/AbcSize:
+  Max: 30
+Metrics/CyclomaticComplexity:
+  Max: 12
+Metrics/PerceivedComplexity:
+  Max: 12
+Layout/LineLength:
+  Max: 130
+
+# Short top-of-file comments are enough here.
+Style/Documentation:
+  Enabled: false
+
+# Solutions put "# O(n)"-style notes after `end` / `def`.
+Style/CommentedKeyword:
+  Enabled: false
