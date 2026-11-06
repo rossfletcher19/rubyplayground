@@ -2,14 +2,16 @@
 
 A small space for practising Ruby: interview-style drills with tests, plus a scratch file for trying things out.
 
+![Ruby Playground web UI: file list and tests on the left, the Ruby editor in the middle, and the interactive terminal below](images/rubyplayground.png)
+
 ## Files
 
-| File | Purpose |
-| --- | --- |
-| `rubyplayground.rb` | Scratch file for experimenting |
+| File                | Purpose                                                           |
+| ------------------- | ----------------------------------------------------------------- |
+| `rubyplayground.rb` | Scratch file for experimenting                                    |
 | `ruby_exercises.rb` | 20 drills to fill in (each starts as `raise NotImplementedError`) |
-| `ruby_tests.rb` | Minitest tests for the drills |
-| `ruby_solutions.rb` | Answer key |
+| `ruby_tests.rb`     | Minitest tests for the drills                                     |
+| `ruby_solutions.rb` | Answer key                                                        |
 
 ## Requirements
 
