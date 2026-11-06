@@ -190,7 +190,8 @@ async function api(path, body) {
 }
 
 // ---------- Files ----------
-const isDirty = (name) => docs[name] && !docs[name].doc.isClean(docs[name].gen);
+// Always a real boolean: classList.toggle(cls, undefined) flips the class instead of removing it.
+const isDirty = (name) => Boolean(docs[name]) && !readOnly.includes(name) && !docs[name].doc.isClean(docs[name].gen);
 
 function renderFiles(files) {
   $("files").innerHTML = "";
