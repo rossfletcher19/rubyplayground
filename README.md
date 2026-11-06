@@ -48,7 +48,18 @@ There's a small browser UI for editing, running and testing the files, with Ruby
 ruby ui/server.rb        # then open http://localhost:4567 in your Windows browser
 ```
 
-Stop it with `Ctrl+C`. To use another port, run `PORT=8080 ruby ui/server.rb`.
+To use another port, run `PORT=8080 ruby ui/server.rb`.
+
+### Stopping the server
+
+- **Started in a terminal:** press `Ctrl+C` in that terminal.
+- **Running in the background**, or you've lost the terminal: run this from any Ubuntu terminal:
+
+  ```bash
+  pkill -f "[r]uby ui/server.rb"   # the [r] stops the command from matching itself
+  ```
+
+To check whether it's still running, use `pgrep -af "[r]uby ui/server.rb"`, which prints nothing when it has stopped.
 
 - **Files:** click a file to open it in the editor. `ruby_solutions.rb` is read-only so the answer key can't be changed by accident. A ● marks unsaved changes.
 - **▶ Run file** (`Ctrl+Enter`) runs the open file in the **Terminal** panel. It's a real terminal, so when the program calls `gets` you type the answer there and press Enter, just as in a shell.
