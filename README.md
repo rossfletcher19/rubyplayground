@@ -18,7 +18,7 @@ A small space for practising Ruby: interview-style drills with tests, plus a scr
 - Ruby 3.x (the files use endless method syntax, which needs Ruby 3.0+)
 - Minitest, which ships with Ruby, so there's nothing to install
 
-On this machine, Ruby 3.4 is installed in **WSL (Ubuntu 24.04)** through [mise](https://mise.jdx.dev/). It isn't installed on the Windows side, so run everything from an Ubuntu terminal.
+For development here, Ruby 3.4 was installed in **WSL (Ubuntu 24.04)** through [mise](https://mise.jdx.dev/). So run everything from an Ubuntu terminal.
 
 ## Getting started
 
